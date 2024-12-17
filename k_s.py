@@ -22,16 +22,13 @@ async def run():
             print("-- Global position estimate OK")
             break
 
-    # Arming the drone
     print("-- Arming")
     await drone.action.arm()
 
-    # Take off to 10 meters
     print("-- Taking off")
     await drone.action.takeoff()
     
-    # Wait for a few seconds to allow the drone to stabilize after takeoff
-    await asyncio.sleep(10)
+    await asyncio.sleep(10) #stab after tkoff
 
     # Mission items
     mission_items = [
@@ -55,7 +52,8 @@ async def run():
 
     await termination_task
 
-    # Landing after mission completion
+    
+#optional
     print("-- Landing")
     await drone.action.land()
 
@@ -93,5 +91,4 @@ async def print_status_text(drone):
 
 
 if __name__ == "__main__":
-    # Run the asyncio loop
     asyncio.run(run())
