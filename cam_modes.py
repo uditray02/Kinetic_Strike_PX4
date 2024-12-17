@@ -214,5 +214,4 @@ async def make_user_choose_option_range(possible_options):
 
 
 if __name__ == "__main__":
-    # Run the asyncio loop
     asyncio.run(run())
