@@ -8,15 +8,15 @@ from mavsdk.gimbal import GimbalMode, ControlMode
 async def run():
     drone = System()
     await drone.connect(system_address="udp://:14540")
-  
     print_gimbal_position_task = \
         asyncio.ensure_future(print_gimbal_position(drone))
 
     print("Taking control of gimbal")
     await drone.gimbal.take_control(ControlMode.PRIMARY)
 
-    # YAW_LOCK (= 1) mode
-    # YAW_FOLLOW (= 0)
+    # gimbal to YAW_LOCK (= 1) mode 
+    # Other valid values: YAW_FOLLOW (= 0)
+    print("Setting gimbal mode")
     await drone.gimbal.set_mode(GimbalMode.YAW_FOLLOW)
 
     print("Look forward first")
@@ -54,6 +54,7 @@ async def run():
     print("Look forward again")
     await drone.gimbal.set_pitch_and_yaw(0, 0)
     await asyncio.sleep(2)
+
     print("Look at a ROI (region of interest)")
     await drone.gimbal.set_roi_location(47.39743832, 8.5463316, 488)
     await asyncio.sleep(3)
