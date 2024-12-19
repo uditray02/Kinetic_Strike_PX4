@@ -46,11 +46,11 @@ async def run():
 
     print("-- Waiting for drone to reach sufficient altitude")
     async for position in drone.telemetry.position():
-        if position.relative_altitude_m > 1:  # Adjust based on your required altitude
+        if position.relative_altitude_m > 1:
             print("-- Drone reached desired altitude")
             break
 
-    await asyncio.sleep(5)  # Additional stabilization after reaching altitude
+    await asyncio.sleep(5)  # Additional stabilization 
 
     # Target location
     target_lat = 47.3984274
@@ -96,8 +96,8 @@ async def run():
     print("-- Mission started")
 
 
-    await drone.param.set_param_float("MPC_XY_CRUISE", 30.0)  # Desired cruising speed
-    await drone.param.set_param_float("MPC_XY_VEL_MAX", 30.0)  # Maximum XY velocity
+    await drone.param.set_param_float("MPC_XY_CRUISE", 30.0) 
+    await drone.param.set_param_float("MPC_XY_VEL_MAX", 30.0) 
 
     print("-- Printing distance to target and altitude in real-time")
     distance_task = asyncio.ensure_future(print_distance_to_target(drone, target_lat, target_lon))
@@ -116,9 +116,9 @@ async def print_distance_to_target(drone, target_lat, target_lon):
     async for position in drone.telemetry.position():
         current_lat = position.latitude_deg
         current_lon = position.longitude_deg
-        current_alt = position.relative_altitude_m  # Altitude relative to takeoff point
-
-        # Calculate distance to target
+        current_alt = position.relative_altitude_m  
+        
+#dis to trg
         distance = haversine(current_lat, current_lon, target_lat, target_lon)
 
         print(f"Distance to target: {distance:.2f} meters | Altitude: {current_alt:.2f} meters")
