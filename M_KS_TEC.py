@@ -3,7 +3,6 @@ from mavsdk import System
 from mavsdk.mission import MissionItem, MissionPlan
 from math import radians, cos, sin, sqrt, atan2, asin, degrees
 
-# Global variables for midpoints
 midpoint_lat = None
 midpoint_lon = None
 
@@ -18,35 +17,31 @@ def haversine(lat1, lon1, lat2, lon2):
 # Function to calculate the new coordinates after moving a certain distance from the target
 def calculate_new_position_from_target(lat1, lon1, target_lat, target_lon, distance_meters):
     earth_radius = 6371000  # Radius of the Earth in meters
-
-    # Convert latitude and longitude from degrees to radians
     lat1_rad = radians(lat1)
     lon1_rad = radians(lon1)
     target_lat_rad = radians(target_lat)
     target_lon_rad = radians(target_lon)
 
-    # Difference in coordinates (target to current)
+    # Difference (target to current)
     delta_lat = target_lat_rad - lat1_rad
     delta_lon = target_lon_rad - lon1_rad
 
-    # Haversine formula to calculate the distance between two points on the Earth
+    # Haversine formula
     a = sin(delta_lat / 2) ** 2 + cos(lat1_rad) * cos(target_lat_rad) * sin(delta_lon / 2) ** 2
     c = 2 * atan2(sqrt(a), sqrt(1 - a))
     distance = earth_radius * c  # Distance in meters
 
-    # the bearing (direction) from the current position to the target
     y = sin(delta_lon) * cos(target_lat_rad)
     x = cos(lat1_rad) * sin(target_lat_rad) - sin(lat1_rad) * cos(target_lat_rad) * cos(delta_lon)
     bearing = atan2(y, x)
 
-    # Calculate the new position by moving the specified distance in the forward direction from the target
-    new_distance = distance_meters / earth_radius  # Convert distance to radians
+    # new position by moving specifuc distance in the forward direction from the target
+    new_distance = distance_meters / earth_radius  
     new_lat_rad = asin(sin(target_lat_rad) * cos(new_distance) +
                        cos(target_lat_rad) * sin(new_distance) * cos(bearing))
     new_lon_rad = target_lon_rad + atan2(sin(bearing) * sin(new_distance) * cos(target_lat_rad),
                                          cos(new_distance) - sin(target_lat_rad) * sin(new_lat_rad))
 
-    # Convert the new latitude and longitude back to degrees
     new_lat = degrees(new_lat_rad)
     new_lon = degrees(new_lon_rad)
 
@@ -83,37 +78,38 @@ async def run():
 
     print("-- Waiting for drone to reach sufficient altitude")
     async for position in drone.telemetry.position():
-        if position.relative_altitude_m > 1:  # Adjust based on your required altitude
+        if position.relative_altitude_m > 1: 
             print("-- Drone reached desired altitude")
             break
 
-    await asyncio.sleep(5)  # Additional stabilization after reaching altitude
+    await asyncio.sleep(5)  # Additional stabilization
 
     # Target location
     target_lat = 47.3984274
     target_lon = 8.5422047
-    target_altitude = -3  # in meters
+    target_altitude = -3  #m
 
-    # Get current position
+    # current position
     current_lat = position.latitude_deg
     current_lon = position.longitude_deg
 
-    # Calculate the new position (100 meters forward from the target)
+    # new position (100 meters forward from the target)
     new_lat, new_lon = calculate_new_position_from_target(current_lat, current_lon, target_lat, target_lon, 100)
     print(f"New coordinates (100 meters forward from target): Latitude = {new_lat}, Longitude = {new_lon}")
 
-    # Mission items
+    # Mission
     mission_items = [
         # Ascend to 30m at the current location
         MissionItem(current_lat, current_lon, 10, 30, True, float('nan'), float('nan'),
                     MissionItem.CameraAction.NONE, float('nan'), float('nan'), float('nan'), float('nan'),
                     float('nan'), MissionItem.VehicleAction.NONE),
 
-        # Then, proceed to the target location
+        # proceeding to the target location
         #MissionItem(target_lat, target_lon, 0, 30, True, float('nan'), float('nan'),
                    # MissionItem.CameraAction.NONE, float('nan'), float('nan'), float('nan'), float('nan'),
                     #float('nan'), MissionItem.VehicleAction.NONE),
 
+        #exceeding 100m from the target(jugaad)
         MissionItem(new_lat, new_lon, target_altitude, 30, True, float('nan'), float('nan'),
                     MissionItem.CameraAction.NONE, float('nan'), float('nan'), float('nan'), float('nan'),
                     float('nan'), MissionItem.VehicleAction.NONE),
@@ -128,8 +124,8 @@ async def run():
     await drone.mission.start_mission()
     print("-- Mission started")
 
-    await drone.param.set_param_float("MPC_XY_CRUISE", 30.0)  # Desired cruising speed
-    await drone.param.set_param_float("MPC_XY_VEL_MAX", 30.0)  # Maximum XY velocity
+    await drone.param.set_param_float("MPC_XY_CRUISE", 30.0) 
+    await drone.param.set_param_float("MPC_XY_VEL_MAX", 30.0) 
 
     print("-- Printing distance to target and altitude in real-time")
     distance_task = asyncio.ensure_future(print_distance_to_target(drone, target_lat, target_lon))
@@ -148,9 +144,7 @@ async def print_distance_to_target(drone, target_lat, target_lon):
     async for position in drone.telemetry.position():
         current_lat = position.latitude_deg
         current_lon = position.longitude_deg
-        current_alt = position.relative_altitude_m  # Altitude relative to takeoff point
-
-        # Calculate distance to target
+        current_alt = position.relative_altitude_m  
         distance = haversine(current_lat, current_lon, target_lat, target_lon)
 
         print(f"Distance to target: {distance:.2f} meters | Altitude: {current_alt:.2f} meters")
